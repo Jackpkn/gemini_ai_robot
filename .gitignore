@@ -1,17 +1,14 @@
-# Python-generated files
+# Python generated files & virtualenvs
 __pycache__/
 *.py[oc]
 build/
 dist/
 wheels/
 *.egg-info
+.venv/
+.pytest_cache/
 
-# Virtual environments
-.venv
-
-# Agent/worktree scratch & build outputs
-.superpowers/
-.worktrees/
+# ROS 2 colcon build outputs (generated inside Docker)
 ros2_ws/build/
 ros2_ws/install/
 ros2_ws/log/

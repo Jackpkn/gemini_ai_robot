@@ -1,10 +1,19 @@
 [project]
 name = "teleop-lab"
 version = "0.1.0"
-description = "Add your description here"
+description = "Robotics middleware, MuJoCo simulation, task execution runtime, and operator console"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12,<3.13"
 dependencies = [
-    "mujoco>=4.0.1",
-    "numpy>=2.5.5",
+    "mujoco>=3.2,<4.0",
+    "numpy>=1.26,<2.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["ros2_ws/src/teleop_basics"]

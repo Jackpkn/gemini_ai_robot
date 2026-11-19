@@ -1,0 +1,36 @@
+services:
+  # Primary robotics runtime container holding ROS 2 Jazzy, MuJoCo, Task Engine, and Operator UI.
+  # Keeping all core nodes in one container avoids macOS Docker Desktop DDS UDP multicast quirks
+  # while keeping monotonic latency timestamps strictly comparable on one Linux kernel clock.
+  teleop:
+    build:
+      # Build context is the repository root (`../` relative to `docker/`),
+      # so Dockerfile can COPY files like `docker/entrypoint.sh`.
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: teleop-lab:jazzy
+    container_name: teleop-runtime
+    working_dir: /workspace
+
+    # Expose port 8000 for the FastAPI Operator Console we will build in Phase 6.
+    ports:
+      - "8000:8000"
+
+    # Bind-mount local workspace folders into the container so edits you make on your Mac
+    # immediately appear inside Linux without rebuilding the Docker image every time.
+    volumes:
+      - ../ros2_ws:/workspace/ros2_ws
+      - ../learning:/workspace/learning
+
+    environment:
+      # Select the ROS 2 Middleware (RMW) driver. Defaults to CycloneDDS; in Phase 4 we will
+      # override this to `rmw_zenoh_cpp` to compare DDS vs Zenoh transport performance.
+      - RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
+      # Isolate DDS discovery on your local network so your nodes only talk to each other.
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}
+      # Ensure Python prints logs right away in Docker terminal output instead of buffering them.
+      - PYTHONUNBUFFERED=1
+
+    # Keep stdin/tty open so we can launch interactive shells or inspect ROS 2 CLI tools smoothly.
+    stdin_open: true
+    tty: true
