@@ -42,7 +42,8 @@ RUN pip3 install --no-cache-dir --break-system-packages \
     "numpy>=1.26,<2.0" \
     "fastapi>=0.115" \
     "uvicorn>=0.32" \
-    "eclipse-zenoh>=1.0"
+    "eclipse-zenoh>=1.0" \
+    "google-genai>=3.2.0"
 
 # Set the working directory inside the container where our ROS 2 workspace and tests are mounted.
 WORKDIR /workspace

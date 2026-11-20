@@ -19,7 +19,15 @@ services:
     # Bind-mount local workspace folders into the container so edits you make on your Mac
     # immediately appear inside Linux without rebuilding the Docker image every time.
     volumes:
+      - ../ros2_ws:/workspace/ros2_ws
       - ../learning:/workspace/learning
+      # Share host gcloud Application Default Credentials (ADC) read-only for Gemini Enterprise / Vertex AI
+      - ${HOME}/.config/gcloud:/root/.config/gcloud:ro
+
+    # Load optional local secrets from repo-root .env (gitignored!) when present.
+    env_file:
+      - path: ../.env
+        required: false
 
     environment:
       # Select the ROS 2 Middleware (RMW) driver. Defaults to CycloneDDS; in Phase 4 we will
