@@ -19,7 +19,6 @@ services:
     # Bind-mount local workspace folders into the container so edits you make on your Mac
     # immediately appear inside Linux without rebuilding the Docker image every time.
     volumes:
-      - ../ros2_ws:/workspace/ros2_ws
       - ../learning:/workspace/learning
 
     environment:
