@@ -1,0 +1,109 @@
+<!--
+  Day 6: A clean, readable 3-DOF robot arm + 2-finger gripper + tabletop cube in MuJoCo (MJCF XML).
+  Notice how nested <body> tags mirror the exact parent -> child coordinate tree from Day 5 (TF2)!
+-->
+<mujoco model="simple_arm_cell">
+  <!-- IMPORTANT MuJoCo gotcha: XML defaults to degrees! Explicitly set radians to match ROS 2. -->
+  <compiler angle="radian"/>
+  <option timestep="0.002" gravity="0 0 -9.81" cone="elliptic" impratio="10"/>
+
+  <visual>
+    <global offwidth="640" offheight="480"/>
+  </visual>
+
+  <worldbody>
+    <!-- Overhead light and fixed camera looking down at the workcell -->
+    <light pos="0.4 -0.4 1.5" dir="-0.2 0.2 -1" diffuse="0.9 0.9 0.9"/>
+    <camera name="overview" pos="0.85 -0.75 0.70" xyaxes="0.68 0.73 0 -0.35 0.33 0.88"/>
+
+    <!-- Floor / workbench surface at z = 0 -->
+    <geom name="table" type="plane" size="1.5 1.5 0.05" rgba="0.85 0.87 0.90 1"/>
+
+    <!-- Green drop zone mat sitting on the table -->
+    <geom name="drop_zone" type="box" pos="0.0 0.35 0.003" size="0.06 0.06 0.003"
+          rgba="0.2 0.75 0.3 0.9" contype="0" conaffinity="0"/>
+
+    <!-- Red target cube with a freejoint so gravity, pushing, and grasping affect it physically -->
+    <body name="target_cube" pos="0.35 0.0 0.026">
+      <freejoint name="cube_free"/>
+      <geom name="cube_geom" type="box" size="0.024 0.024 0.024" mass="0.06"
+            condim="4" friction="2.0 0.02 0.005" rgba="0.90 0.20 0.20 1"/>
+    </body>
+
+    <!-- Yellow block (reachable at r=0.34m, clearly visible in overview camera) -->
+    <body name="yellow_block" pos="0.28 -0.20 0.026">
+      <freejoint name="yellow_free"/>
+      <geom name="yellow_geom" type="box" size="0.024 0.024 0.024" mass="0.06"
+            condim="4" friction="2.0 0.02 0.005" rgba="0.98 0.90 0.08 1"/>
+    </body>
+
+    <!-- Purple cup (cylinder shape, reachable at r=0.33m, distinct from blue robot arm) -->
+    <body name="purple_cup" pos="0.24 0.22 0.034">
+      <freejoint name="cup_free"/>
+      <geom name="cup_geom" type="cylinder" size="0.022 0.032" mass="0.06"
+            condim="4" friction="2.0 0.02 0.005" rgba="0.65 0.20 0.85 1"/>
+    </body>
+
+    <!-- Robot base bolted to the table at (0, 0, 0) -->
+    <body name="base_link" pos="0 0 0">
+      <geom type="cylinder" fromto="0 0 0 0 0 0.08" size="0.06" rgba="0.25 0.28 0.32 1"/>
+
+      <!-- Joint 1: Base rotates left/right around the vertical Z axis -->
+      <body name="turret" pos="0 0 0.08">
+        <joint name="base_yaw" type="hinge" axis="0 0 1" range="-3.14 3.14" damping="0.4" armature="0.05"/>
+        <geom type="cylinder" fromto="0 0 0 0 0 0.06" size="0.045" rgba="0.15 0.45 0.80 1"/>
+
+        <!-- Joint 2: Shoulder pitches upper arm up/down around Y axis -->
+        <body name="upper_arm" pos="0 0 0.06">
+          <joint name="shoulder_pitch" type="hinge" axis="0 1 0" range="-1.57 1.57" damping="0.4" armature="0.05"/>
+          <geom type="capsule" fromto="0 0 0 0 0 0.28" size="0.026" mass="0.6" rgba="0.20 0.55 0.90 1"/>
+
+          <!-- Joint 3: Elbow bends forearm around Y axis -->
+          <body name="forearm" pos="0 0 0.28">
+            <joint name="elbow_pitch" type="hinge" axis="0 1 0" range="-2.4 2.4" damping="0.3" armature="0.05"/>
+            <geom type="capsule" fromto="0 0 0 0.25 0 0" size="0.022" mass="0.4" rgba="0.35 0.70 0.95 1"/>
+
+            <!-- Joint 4: Auto-leveling wrist keeps downward parallel-jaw gripper strictly vertical! -->
+            <body name="gripper_base" pos="0.25 0 0">
+              <joint name="wrist_pitch" type="hinge" axis="0 1 0" range="-3.14 3.14" damping="0.3" armature="0.05"/>
+              <geom type="box" size="0.022 0.055 0.012" mass="0.1" rgba="0.25 0.28 0.32 1"/>
+              <!-- Site = pinch center right between the two vertical rubber finger pads -->
+              <site name="ee_tip" pos="0 0 -0.055" size="0.006" rgba="0.8 0.8 0.8 0.25"/>
+
+              <body name="left_finger" pos="0 0.046 -0.048">
+                <joint name="left_finger_slide" type="slide" axis="0 -1 0" range="0 0.040" damping="1.0" armature="0.05"/>
+                <geom type="box" size="0.016 0.006 0.036" mass="0.03" condim="4" friction="2.5 0.05 0.01" rgba="0.32 0.36 0.42 1"/>
+              </body>
+
+              <body name="right_finger" pos="0 -0.046 -0.048">
+                <joint name="right_finger_slide" type="slide" axis="0 1 0" range="0 0.040" damping="1.0" armature="0.05"/>
+                <geom type="box" size="0.016 0.006 0.036" mass="0.03" condim="4" friction="2.5 0.05 0.01" rgba="0.32 0.36 0.42 1"/>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <!-- Disable self-collisions between adjacent connected links (standard in real MuJoCo arms!) -->
+  <contact>
+    <exclude body1="base_link" body2="turret"/>
+    <exclude body1="turret" body2="upper_arm"/>
+    <exclude body1="upper_arm" body2="forearm"/>
+    <exclude body1="forearm" body2="gripper_base"/>
+    <exclude body1="gripper_base" body2="left_finger"/>
+    <exclude body1="gripper_base" body2="right_finger"/>
+    <exclude body1="left_finger" body2="right_finger"/>
+  </contact>
+
+  <!-- Position servo motors: writing `data.ctrl[i] = target` drives each joint smoothly -->
+  <actuator>
+    <position name="act_base" joint="base_yaw" kp="100" kv="12" ctrlrange="-3.14 3.14"/>
+    <position name="act_shoulder" joint="shoulder_pitch" kp="160" kv="16" ctrlrange="-1.57 1.57"/>
+    <position name="act_elbow" joint="elbow_pitch" kp="120" kv="12" ctrlrange="-2.4 2.4"/>
+    <position name="act_wrist" joint="wrist_pitch" kp="60" kv="6" ctrlrange="-3.14 3.14"/>
+    <position name="act_left_finger" joint="left_finger_slide" kp="80" kv="6" ctrlrange="0 0.040" forcerange="-20 20"/>
+    <position name="act_right_finger" joint="right_finger_slide" kp="80" kv="6" ctrlrange="0 0.040" forcerange="-20 20"/>
+  </actuator>
+</mujoco>
