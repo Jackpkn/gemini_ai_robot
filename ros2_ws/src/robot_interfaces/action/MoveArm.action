@@ -1,0 +1,13 @@
+# Goal: where we want the robot arm's end-effector to move (in meters)
+float64 target_x
+float64 target_y
+float64 target_z
+---
+# Result: final summary returned once the move succeeds or is canceled
+bool success
+string message
+float64 final_distance_m
+---
+# Feedback: live progress updates streamed continuously while moving
+float64 distance_remaining_m
+float64 progress_pct

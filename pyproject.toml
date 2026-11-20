@@ -13,3 +13,8 @@ dependencies = [
 dev = [
     "pytest>=8.0",
 ]
+
+
+
+[tool.pyrefly]
+search-path = [".", ".ros_stubs", "ros2_ws/install/robot_interfaces/lib/python3.12/site-packages"]

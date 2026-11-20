@@ -12,3 +12,10 @@ wheels/
 ros2_ws/build/
 ros2_ws/install/
 ros2_ws/log/
+
+# Local ROS 2 Python stubs extracted from Docker for editor autocomplete
+.ros_stubs/
+
+# Local API keys / secrets (never commit!)
+.env
+.env.*
